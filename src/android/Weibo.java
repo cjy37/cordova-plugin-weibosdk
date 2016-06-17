@@ -105,6 +105,7 @@ public class Weibo extends CordovaPlugin {
                 mAuthInfo);
         mAccessToken = AccessTokenKeeper.readAccessToken(Weibo.this.cordova
                 .getActivity());
+				/*
         if (mAccessToken.isSessionValid()) {
             JSONObject jo = makeJson(mAccessToken.getToken(),
                     mAccessToken.getUid());
@@ -112,6 +113,7 @@ public class Weibo extends CordovaPlugin {
                     PluginResult.Status.OK, jo), callbackContext
                     .getCallbackId());
         } else {
+				*/
             Runnable runnable = new Runnable() {
                 public void run() {
                     if (mSsoHandler != null) {
@@ -123,7 +125,7 @@ public class Weibo extends CordovaPlugin {
             };
             this.cordova.setActivityResultCallback(this);
             this.cordova.getActivity().runOnUiThread(runnable);
-        }
+	//}
         return true;
     }
 

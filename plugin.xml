@@ -151,7 +151,7 @@
     </activity>
     <!--android mianfest for weibo share callback -->
     <activity
-      android:name="org.zy.yuancheng.weibo.WeiboShareCallback"
+      android:name="org.sina.weibo.WeiboShareCallback"
       android:configChanges="keyboardHidden|orientation"
       android:screenOrientation="portrait" >
       <intent-filter>
