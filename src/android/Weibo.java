@@ -3,12 +3,18 @@ package org.sina.weibo;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
+import com.gli.reader.R;
+import com.sina.weibo.sdk.api.ImageObject;
+import com.sina.weibo.sdk.api.TextObject;
 import com.sina.weibo.sdk.api.WebpageObject;
 import com.sina.weibo.sdk.api.WeiboMessage;
+import com.sina.weibo.sdk.api.WeiboMultiMessage;
 import com.sina.weibo.sdk.api.share.IWeiboShareAPI;
 import com.sina.weibo.sdk.api.share.SendMessageToWeiboRequest;
+import com.sina.weibo.sdk.api.share.SendMultiMessageToWeiboRequest;
 import com.sina.weibo.sdk.api.share.WeiboShareSDK;
 import com.sina.weibo.sdk.auth.AuthInfo;
 import com.sina.weibo.sdk.auth.Oauth2AccessToken;
@@ -23,6 +29,7 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -181,7 +188,7 @@ public class Weibo extends CordovaPlugin {
             @Override
             public void run() {
                 try {
-                    sendSingleMessage(args.getJSONObject(0));
+                    sendMultiMessage(args.getJSONObject(0));
                 } catch (JSONException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
@@ -200,73 +207,58 @@ public class Weibo extends CordovaPlugin {
 
     }
 
-    /**
-     * 生成微博要分享出去的网页对象
-     *
-     * @param params
-     * @return
-     * @throws JSONException
-     */
-    private WebpageObject getWebpageObj(JSONObject params) throws JSONException {
-        WebpageObject mediaObject = new WebpageObject();
-        mediaObject.identify = Utility.generateGUID();
-        mediaObject.title = params.getString("title");
-        mediaObject.description = params.getString("description");
-        if (params.getString("imageUrl") != null
-                && !params.getString("imageUrl").equalsIgnoreCase("")) {
-            try {
-                if (params.getString("imageUrl").startsWith("http://")
-                        || params.getString("imageUrl").startsWith("https://")) {
-                    Bitmap thumb = BitmapFactory.decodeStream(new URL(params
-                            .getString("imageUrl")).openConnection()
-                            .getInputStream());
-                    mediaObject.setThumbImage(thumb);
-                } else {
-                    currentCallbackContext.error(ERROR_IMAGE_URL);
-                }
-
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        } else {
-            try {
-                Bitmap thumb = BitmapFactory
-                        .decodeStream(new URL(DEFAULT_WEBPAGE_ICON)
-                                .openConnection().getInputStream());
-                mediaObject.setThumbImage(thumb);
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        mediaObject.actionUrl = params.getString("url");
-        mediaObject.defaultText = params.getString("defaultText");
-        return mediaObject;
-    }
 
     /**
-     * 发送微博单条消息请求
+     * 发送微博消息请求
      *
      * @param params
      */
-    private void sendSingleMessage(JSONObject params) {
-        WeiboMessage weiboMessage = new WeiboMessage();
+
+    private void sendMultiMessage(JSONObject params) {
+        WeiboMultiMessage weiboMessage = new WeiboMultiMessage();
         try {
-            weiboMessage.mediaObject = getWebpageObj(params);
+            try {
+                ImageObject imageObject = new ImageObject();
+                URL url = new URL(params.getString("imageUrl"));
+                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                imageObject.setImageObject(bmp);
+                weiboMessage.imageObject=imageObject;
+            }
+            catch (MalformedURLException e){
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+
+            WebpageObject mediaObject = new WebpageObject();
+            mediaObject.identify = Utility.generateGUID();
+            mediaObject.title = params.getString("title");
+            mediaObject.description = "";
+
+            try {
+
+                URL url = new URL(params.getString("imageUrl"));
+                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                mediaObject.setThumbImage(bmp);
+            }
+            catch (MalformedURLException e){
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            mediaObject.actionUrl = params.getString("url");
+            mediaObject.defaultText = "精灵天下";
+            weiboMessage.mediaObject=mediaObject;
         } catch (JSONException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        SendMessageToWeiboRequest request = new SendMessageToWeiboRequest();
+        SendMultiMessageToWeiboRequest request = new SendMultiMessageToWeiboRequest();//SendMessageToWeiboRequest
+
         request.transaction = String.valueOf(System.currentTimeMillis());
-        request.message = weiboMessage;
+        request.multiMessage = weiboMessage;
         if (mWeiboShareAPI.isWeiboAppInstalled()) {
             if (mWeiboShareAPI.isWeiboAppSupportAPI()) {
                 mWeiboShareAPI.sendRequest(this.cordova.getActivity(), request);
@@ -274,7 +266,7 @@ public class Weibo extends CordovaPlugin {
                 currentCallbackContext.error(UNKONW_ERROR);
             }
         } else {
-            sendSingleMsgWithOutClient(request);
+            sendMultiMsgWithOutClient(request);
         }
     }
 
@@ -283,7 +275,7 @@ public class Weibo extends CordovaPlugin {
      *
      * @param request
      */
-    private void sendSingleMsgWithOutClient(SendMessageToWeiboRequest request) {
+    private void sendMultiMsgWithOutClient(SendMultiMessageToWeiboRequest request) {
         AuthInfo mAuthInfo = new AuthInfo(Weibo.this.cordova.getActivity(),
                 APP_KEY, REDIRECT_URL, SCOPE);
         Oauth2AccessToken accessToken = AccessTokenKeeper
