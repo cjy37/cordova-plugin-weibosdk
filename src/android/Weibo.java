@@ -234,7 +234,7 @@ public class Weibo extends CordovaPlugin {
             WebpageObject mediaObject = new WebpageObject();
             mediaObject.identify = Utility.generateGUID();
             mediaObject.title = params.getString("title");
-            mediaObject.description = "";
+            mediaObject.description = params.getString("description");
 
             try {
 
@@ -249,7 +249,7 @@ public class Weibo extends CordovaPlugin {
                 e.printStackTrace();
             }
             mediaObject.actionUrl = params.getString("url");
-            mediaObject.defaultText = "精灵天下";
+            mediaObject.defaultText = params.getString("defaultText");
             weiboMessage.mediaObject=mediaObject;
         } catch (JSONException e) {
             // TODO Auto-generated catch block
