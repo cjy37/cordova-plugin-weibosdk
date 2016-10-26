@@ -1,4 +1,4 @@
-#import "YCWeibo.h"
+#import "Weibo.h"
 
 NSString *WEBIO_APP_ID = @"weibo_app_id";
 NSString *WEBIO_REDIRECT_URI = @"redirecturi";
